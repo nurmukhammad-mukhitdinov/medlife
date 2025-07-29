@@ -10,12 +10,13 @@ from app.routers import locations, users, hospitals, doctors, queue
 from app.version import __version__
 
 # 1. Collect all sub‑routers under a single API router
-api_router = APIRouter(prefix="/api/v1")
-api_router.include_router(users.router, prefix="/users", tags=["users"])
-api_router.include_router(locations.router, prefix="/locations", tags=["locations"])
-api_router.include_router(hospitals.router, prefix="/hospitals", tags=["hospitals"])
-api_router.include_router(doctors.router, prefix="/doctors", tags=["doctors"])
-api_router.include_router(queue.router, prefix="/queue", tags=["queue"])
+
+api_router = APIRouter()
+api_router.include_router(users.router)
+api_router.include_router(locations.router)
+api_router.include_router(hospitals.router)
+api_router.include_router(doctors.router)
+api_router.include_router(queue.router)
 
 
 def create_app() -> FastAPI:
