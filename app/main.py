@@ -9,12 +9,13 @@ from app.core.config import config
 from app.routers import locations, users, hospitals, doctors, queue
 from app.version import __version__
 
-api_router = APIRouter()
-api_router.include_router(users.router)
-api_router.include_router(locations.router)
-api_router.include_router(hospitals.router)
-api_router.include_router(doctors.router)
-api_router.include_router(queue.router)
+# 1. Collect all sub‑routers under a single API router
+api_router = APIRouter(prefix="/api/v1")
+api_router.include_router(users.router, prefix="/users", tags=["users"])
+api_router.include_router(locations.router, prefix="/locations", tags=["locations"])
+api_router.include_router(hospitals.router, prefix="/hospitals", tags=["hospitals"])
+api_router.include_router(doctors.router, prefix="/doctors", tags=["doctors"])
+api_router.include_router(queue.router, prefix="/queue", tags=["queue"])
 
 
 def create_app() -> FastAPI:
@@ -23,25 +24,35 @@ def create_app() -> FastAPI:
         version=__version__,
         openapi_url="/openapi.json",
         docs_url="/docs",
-        redoc_url="/redoc",
+        redoc_url=None,  # disable redoc if you don't need it
     )
 
+    # 2. Enforce HTTPS in production (redirects HTTP → HTTPS)
     if config.ENVIRONMENT == "production":
         app.add_middleware(HTTPSRedirectMiddleware)
+
+    # 3. Trust only specified hosts
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=config.TRUSTED_HOSTS,
     )
+
+    # 4. GZip compress responses over 1000 bytes
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+    # 5. CORS must be outermost so it can respond to OPTIONS (preflight) before any redirect
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=config.ALLOWED_ORIGINS,
+        allow_origins=[
+            "http://localhost:5173",
+            "https://medlife-production.up.railway.app",
+        ],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
+    # 6. Add custom security headers on every response
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):
         response = await call_next(request)
@@ -54,8 +65,10 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
         return response
 
+    # 7. Register the API routers
     app.include_router(api_router)
 
+    # 8. Health‑check endpoint (not shown in OpenAPI)
     @app.get("/", include_in_schema=False)
     async def health_check():
         return {
@@ -67,9 +80,10 @@ def create_app() -> FastAPI:
     return app
 
 
+# 9. Create the app instance
 app = create_app()
 
-
+# 10. If run as a script, launch Uvicorn
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
