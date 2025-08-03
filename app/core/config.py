@@ -1,24 +1,45 @@
 import os
 from typing import List
 import asyncio
+
 import tiktoken
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
-import tiktoken
+from pydantic_settings import BaseSettings
 from fastapi import HTTPException
 from openai import OpenAI
 
+# load .env so os.getenv can see everything
+load_dotenv(override=True)
+
 
 class DatabaseConfig(BaseModel):
-    dsn: str = "postgresql://user:password@host:port/dbname"
-    async_dsn: str = "postgresql+asyncpg://user:password@host:port/dbname"
+    # now pulls from your .env keys; supply sensible defaults if you like
+    dsn: str = Field(
+        default_factory=lambda: os.getenv(
+            "DATABASE__DSN", "postgresql://user:password@localhost:5432/dbname"
+        )
+    )
+    async_dsn: str = Field(
+        default_factory=lambda: os.getenv(
+            "DATABASE__ASYNC_DSN", "postgresql+asyncpg://user:password@localhost:5432/dbname"
+        )
+    )
 
 
 class AIConfig(BaseModel):
-    openai_api_key: str
-    model_name: str = "gpt-4"
-    temperature: float = 0.3
-    max_tokens: int = 200
+    openai_api_key: str = Field(
+        default_factory=lambda: os.getenv("AI__OPENAI_API_KEY", "")
+    )
+    model_name: str = Field(
+        default_factory=lambda: os.getenv("AI__MODEL_NAME", "gpt-4")
+    )
+    temperature: float = Field(
+        default_factory=lambda: float(os.getenv("AI__TEMPERATURE", 0.3))
+    )
+    max_tokens: int = Field(
+        default_factory=lambda: int(os.getenv("AI__MAX_TOKENS", 200))
+    )
 
 
 class Config(BaseSettings):
@@ -29,26 +50,25 @@ class Config(BaseSettings):
     ALLOWED_ORIGINS: List[str] = ["*"]
 
     database: DatabaseConfig = DatabaseConfig()
-    ai: AIConfig
+    ai: AIConfig = AIConfig()
 
-    token_key: str = ""
+    token_key: str = Field(
+        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "")
+    )
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    SECRET_KEY: str = os.environ.get("JWT_SECRET_KEY")
+    SECRET_KEY: str = Field(
+        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "")
+    )
     ALGORITHM: str = "HS256"
 
-    model_config = SettingsConfigDict(
-        extra="ignore",
-        env_file=".env",
-        env_file_encoding="utf-8",
-        env_nested_delimiter="__",
-        case_sensitive=False,
-    )
 
-
+# single global config instance
 config = Config()
+
+
 # Pricing constants for gpt-3.5-turbo (change if you switch models)
-INPUT_PRICE_PER_K1 = 0.0015  # $0.0015 per 1 K input tokens
-OUTPUT_PRICE_PER_K1 = 0.002  # $0.002  per 1 K output tokens
+INPUT_PRICE_PER_K1 = 0.0015  # $0.0015 per 1K input tokens
+OUTPUT_PRICE_PER_K1 = 0.002   # $0.002  per 1K output tokens
 PER_CALL_DOLLAR_LIMIT = 0.01  # $0.01 max per call
 
 
@@ -76,7 +96,7 @@ async def get_chat_response(messages: list[dict]) -> str:
             ),
         )
 
-    # 5️⃣ Perform the sync API call in a thread
+    # 5️⃣ Perform the API call
     client = OpenAI(api_key=config.ai.openai_api_key)
     resp = await asyncio.to_thread(
         client.chat.completions.create,
