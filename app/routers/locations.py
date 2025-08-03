@@ -22,11 +22,6 @@ from app.exc import LoggedHTTPException, raise_with_log
 router = APIRouter(prefix="/locations")
 
 
-#
-# ─── REGION ENDPOINTS ─────────────────────────────────────────────────────────
-#
-
-
 @router.get(
     "/regions",
     tags=["Locations - Regions"],

@@ -2,7 +2,7 @@ from .base import BaseSchema
 
 
 class ErrorResponse(BaseSchema):
-    code:    int
+    code: int
     message: str
 
 

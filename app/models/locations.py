@@ -27,6 +27,11 @@ class RegionModel(SQLModel):
         back_populates="region",
         cascade="all, delete-orphan",
     )
+    user_details = relationship(
+        "UserDetailModel",
+        back_populates="region",
+        cascade="all, delete-orphan",
+    )
 
 
 class DistrictModel(SQLModel):
@@ -48,6 +53,11 @@ class DistrictModel(SQLModel):
     region = relationship("RegionModel", back_populates="districts")
     hospitals = relationship(
         "HospitalModel",
+        back_populates="district",
+        cascade="all, delete-orphan",
+    )
+    user_details = relationship(
+        "UserDetailModel",
         back_populates="district",
         cascade="all, delete-orphan",
     )

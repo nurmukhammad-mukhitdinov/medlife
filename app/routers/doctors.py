@@ -12,7 +12,9 @@ from app.schemas.doctors import (
 )
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
-
+from fastapi import UploadFile, File
+from fastapi.responses import JSONResponse
+import traceback
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
 
@@ -120,4 +122,70 @@ async def delete_doctor(
         raise_with_log(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             f"Failed to delete doctor: {e}",
+        )
+
+
+@router.post(
+    "/{doctor_id}/photo",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def upload_doctor_photo(
+        doctor_id: uuid.UUID,
+        file: UploadFile = File(...),
+        db: AsyncSession = Depends(get_async_db),
+):
+    """Read bytes, Base64-encode & save as TEXT."""
+    try:
+        data = await file.read()
+        await DoctorService(db).upload_photo(doctor_id, data)
+    except LoggedHTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to upload doctor photo: {e}",
+        )
+
+
+@router.get(
+    "/{doctor_id}/photo",
+    status_code=status.HTTP_200_OK,
+)
+async def get_doctor_photo(
+        doctor_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+):
+    """Return JSON `{ "photo": "<base64-string>" }`."""
+    try:
+        b64 = await DoctorService(db).get_photo(doctor_id)
+        return JSONResponse(content={"photo": b64})
+    except LoggedHTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to get doctor photo: {e}",
+        )
+
+
+@router.delete(
+    "/{doctor_id}/photo",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_doctor_photo(
+        doctor_id: uuid.UUID,
+        db: AsyncSession = Depends(get_async_db),
+):
+    """Remove the doctor’s Base64 photo from the DB."""
+    try:
+        await DoctorService(db).delete_photo(doctor_id)
+    except LoggedHTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to delete doctor photo: {e}",
         )

@@ -10,9 +10,11 @@ from app.schemas.hospitals import (
     HospitalUpdateSchema,
     HospitalResponseSchema,
 )
+import base64
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
-
+from fastapi import UploadFile, File
+from fastapi.responses import JSONResponse
 router = APIRouter(
     prefix="/hospitals",
     tags=["Locations - Hospitals"],
@@ -123,4 +125,50 @@ async def delete_hospital(
         raise_with_log(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             f"Failed to delete hospital: {e}",
+        )
+
+@router.post(
+    "/{hospital_id}/photo",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def upload_hospital_photo(
+    hospital_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Read bytes, Base64-encode & save as TEXT."""
+    data = await file.read()
+    await HospitalService(db).upload_photo(hospital_id, data)
+
+
+@router.get(
+    "/{hospital_id}/photo",
+    status_code=status.HTTP_200_OK,
+)
+async def get_hospital_photo(
+    hospital_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Return JSON `{ "photo": "<base64-string>" }`."""
+    b64 = await HospitalService(db).get_photo(hospital_id)
+    return JSONResponse(content={"photo": b64})
+
+@router.delete(
+    "/{hospital_id}/photo",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_hospital_photo(
+    hospital_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+):
+    """Remove the hospital’s Base64 photo from the DB."""
+    try:
+        await HospitalService(db).delete_photo(hospital_id)
+    except LoggedHTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to delete hospital photo: {e}",
         )

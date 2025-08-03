@@ -68,3 +68,46 @@ class UserBasicSchema(BaseSchema):
     phone_number: str
     first_name: Optional[str]
     last_name: Optional[str]
+
+
+class CreateUserDetailRequest(BaseSchema):
+    region_id: Optional[uuid.UUID] = None
+    district_id: Optional[uuid.UUID] = None
+    height_cm: Optional[int] = None
+    weight_kg: Optional[int] = None
+    blood_sugar_mg_dl: Optional[float] = None
+    bp_systolic_mm_hg: Optional[int] = None
+    bp_diastolic_mm_hg: Optional[int] = None
+    cholesterol_mg_dl: Optional[float] = None
+    hemoglobin_g_dl: Optional[float] = None
+
+
+class UpdateUserDetailRequest(BaseSchema):
+    region_id: Optional[uuid.UUID] = None
+    district_id: Optional[uuid.UUID] = None
+    height_cm: Optional[int] = None
+    weight_kg: Optional[int] = None
+    blood_sugar_mg_dl: Optional[float] = None
+    bp_systolic_mm_hg: Optional[int] = None
+    bp_diastolic_mm_hg: Optional[int] = None
+    cholesterol_mg_dl: Optional[float] = None
+    hemoglobin_g_dl: Optional[float] = None
+
+
+class UserDetailResponse(BaseSchema):
+    id: uuid.UUID
+    user_id: uuid.UUID
+
+    region_id: Optional[uuid.UUID]
+    region_name: Optional[str]
+
+    district_id: Optional[uuid.UUID]
+    district_name: Optional[str]
+
+    height_cm: Optional[int]
+    weight_kg: Optional[int]
+    blood_sugar_mg_dl: Optional[float]
+    bp_systolic_mm_hg: Optional[int]
+    bp_diastolic_mm_hg: Optional[int]
+    cholesterol_mg_dl: Optional[float]
+    hemoglobin_g_dl: Optional[float]

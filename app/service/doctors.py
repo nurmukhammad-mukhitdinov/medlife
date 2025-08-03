@@ -7,7 +7,8 @@ from sqlalchemy.orm import selectinload
 from app.models.doctors import DoctorModel
 from app.schemas.doctors import DoctorCreateSchema, DoctorUpdateSchema
 from app.exc import LoggedHTTPException
-
+from app.exc import LoggedHTTPException
+import base64
 
 class DoctorService:
     def __init__(self, db: AsyncSession):
@@ -64,4 +65,21 @@ class DoctorService:
     async def delete_doctor(self, doctor_id: uuid.UUID) -> None:
         doc = await self.get_doctor(doctor_id)
         await self.db.delete(doc)
+        await self.db.flush()
+
+    async def upload_photo(self, doctor_id: uuid.UUID, data: bytes):
+        """Base64-encode & save as TEXT."""
+        doc = await self.get_doctor(doctor_id)
+        doc.photo = base64.b64encode(data).decode("ascii")
+        await self.db.flush()
+
+    async def get_photo(self, doctor_id: uuid.UUID) -> str:
+        """Return stored Base64 string (or empty)."""
+        doc = await self.get_doctor(doctor_id)
+        return doc.photo or ""
+
+    async def delete_photo(self, doctor_id: uuid.UUID) -> None:
+        """Remove the stored Base64 photo."""
+        doc = await self.get_doctor(doctor_id)
+        doc.photo = None
         await self.db.flush()

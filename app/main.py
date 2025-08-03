@@ -6,7 +6,7 @@ from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import config
-from app.routers import locations, users, hospitals, doctors, queue
+from app.routers import locations, users, hospitals, doctors, queue, chat
 from app.version import __version__
 
 # 1. Collect all sub‑routers under a single API router
@@ -17,6 +17,7 @@ api_router.include_router(locations.router)
 api_router.include_router(hospitals.router)
 api_router.include_router(doctors.router)
 api_router.include_router(queue.router)
+api_router.include_router((chat.router))
 
 
 def create_app() -> FastAPI:

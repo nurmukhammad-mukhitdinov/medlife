@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, Float
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -15,6 +15,8 @@ class HospitalModel(SQLModel):
     name = Column(String, nullable=False)
     address = Column(String, nullable=True)
     orientir = Column(String, nullable=True)
+    photo       = Column(Text, nullable=True)
+    reyting = Column(Float, nullable=True)
 
     region_id = Column(
         UUID(as_uuid=True),
