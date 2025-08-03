@@ -9,7 +9,6 @@ from app.core.config import config
 from app.routers import locations, users, hospitals, doctors, queue, chat
 from app.version import __version__
 
-# 1. Collect all sub‑routers under a single API router
 
 api_router = APIRouter()
 api_router.include_router(users.router)
