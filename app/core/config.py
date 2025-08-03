@@ -2,14 +2,11 @@ import os
 from typing import List
 import asyncio
 import tiktoken
-from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 import tiktoken
 from fastapi import HTTPException
 from openai import OpenAI
-
-load_dotenv(override=True)
 
 
 class DatabaseConfig(BaseModel):
