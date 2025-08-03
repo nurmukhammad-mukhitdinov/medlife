@@ -23,8 +23,12 @@ from app.schemas.users import (
 from app.service.users import UserDetailService
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
-
-
+from app.core.security import verify_password, create_access_token
+from app.models.users import UserModel
+from app.schemas.users import SignInRequestSchema, SignInResponseSchema
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 router = APIRouter(prefix="/users")
 
 
@@ -40,7 +44,40 @@ async def check_user_exists(
 ):
     exists = await UserService(db).check_exists(payload.phone_number)
     return CheckUserExistsResponseSchema(exists=exists)
+@router.post(
+    "/login",
+    response_model=SignInResponseSchema,
+    status_code=status.HTTP_200_OK,
+tags=["Users"]
 
+)
+async def login(
+    credentials: SignInRequestSchema,
+    db: AsyncSession = Depends(get_async_db),
+):
+    # 1️⃣ Lookup the user by phone number
+    stmt = select(UserModel).where(UserModel.phone_number == credentials.phone_number)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+
+    if not user or not verify_password(credentials.password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid phone number or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # 2️⃣ Create JWT
+    access_token, expires_at = create_access_token(
+        data={"sub": str(user.id)}
+    )
+
+    # 3️⃣ Return the token payload
+    return SignInResponseSchema(
+        access_token=access_token,
+        token_type="bearer",
+        expires_at=expires_at,
+    )
 
 @router.post(
     "",

@@ -44,6 +44,7 @@ class HospitalService:
             orientir=payload.orientir,
             region_id=payload.region_id,
             district_id=payload.district_id,
+            reyting=payload.reyting if hasattr(payload, 'reyting') else 5.00,
         )
         self.db.add(hosp)
         await self.db.flush()

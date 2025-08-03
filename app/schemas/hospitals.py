@@ -1,11 +1,12 @@
 import uuid
 from typing import Optional
 from pydantic import BaseModel
-from .base import BaseSchema  # your common settings
+from .base import BaseSchema
 from .locations import (
     RegionBasicSchema,
     DistrictBasicSchema,
-)  # from your earlier mini‑schemas
+)
+from pydantic import BaseModel, Field
 
 
 class HospitalCreateSchema(BaseModel):
@@ -36,5 +37,6 @@ class HospitalResponseSchema(BaseSchema):
     name: str
     address: Optional[str]
     orientir: Optional[str]
+    reyting:Optional[float]
     region: RegionBasicSchema
     district: DistrictBasicSchema

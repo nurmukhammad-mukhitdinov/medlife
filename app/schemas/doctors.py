@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 from .base import BaseSchema
 from .hospitals import HospitalBasicSchema
+from pydantic import BaseModel, Field
 
 
 class DoctorCreateSchema(BaseModel):
@@ -27,6 +28,7 @@ class DoctorResponseSchema(BaseSchema):
     last_name: str
     professional: Optional[str]
     about: Optional[str]
+    reyting:Optional[float]
     hospital: HospitalBasicSchema
 
 
