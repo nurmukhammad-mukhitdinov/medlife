@@ -25,13 +25,14 @@ from app.schemas.users import SignInRequestSchema, SignInResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from fastapi import Depends
-from app.core.security import get_current_user
 
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import verify_password, create_access_token
 from app.models.users import UserModel
+from app.core.security import get_current_user
+
 from app.core.database import get_async_db
 from app.schemas.users import SignInResponseSchema
 

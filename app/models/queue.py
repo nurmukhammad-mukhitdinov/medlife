@@ -25,7 +25,9 @@ class QueueModel(SQLModel):
     user_id = Column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-
+    appointment_date = Column(DateTime, nullable=False)  # e.g., 2025-08-12
+    appointment_start = Column(DateTime, nullable=False)  # e.g., 09:30
+    appointment_end = Column(DateTime, nullable=False)  # e.g., 10:00
     position = Column(Integer, nullable=True)
     status = Column(String, default="waiting", nullable=False)
     called_at = Column(DateTime, nullable=True)

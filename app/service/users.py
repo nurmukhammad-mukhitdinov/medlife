@@ -39,6 +39,7 @@ class UserService:
             email=payload.email,
             first_name=payload.first_name,
             last_name=payload.last_name,
+            role_id="8497eb6c-0eea-40e7-8467-f8e393f56811",
         )
         self.db.add(user)
         await self.db.flush()  # populate id & created_at

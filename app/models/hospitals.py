@@ -28,6 +28,11 @@ class HospitalModel(SQLModel):
         ForeignKey("districts.id", ondelete="RESTRICT"),
         nullable=False,
     )
+    admin_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    admin = relationship("UserModel", back_populates="admin_hospital")
 
     region = relationship("RegionModel", back_populates="hospitals")
     district = relationship("DistrictModel", back_populates="hospitals")
@@ -38,6 +43,11 @@ class HospitalModel(SQLModel):
     )
     queues = relationship(
         "QueueModel",
+        back_populates="hospital",
+        cascade="all, delete-orphan",
+    )
+    services = relationship(
+        "ServiceModel",
         back_populates="hospital",
         cascade="all, delete-orphan",
     )
