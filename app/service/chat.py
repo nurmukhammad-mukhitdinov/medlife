@@ -26,7 +26,10 @@ class ChatService:
         self.db = db
 
     async def send(
-        self, payload: ChatRequestSchema, conversation_id: uuid.UUID | None, user_id: uuid.UUID
+        self,
+        payload: ChatRequestSchema,
+        conversation_id: uuid.UUID | None,
+        user_id: uuid.UUID,
     ) -> Tuple[str, uuid.UUID]:
         # 1️⃣ Create a new ID if none given
         if conversation_id is None:
@@ -64,6 +67,7 @@ class ChatService:
         await self.db.commit()
 
         return reply, conversation_id
+
     async def list(self, user_id: uuid.UUID) -> List[ChatHistoryModel]:
         result = await self.db.execute(
             select(ChatHistoryModel)
@@ -100,8 +104,7 @@ class ChatService:
     ) -> None:
         # ensure it exists
         result = await self.db.execute(
-            select(ChatHistoryModel.id)
-            .where(
+            select(ChatHistoryModel.id).where(
                 ChatHistoryModel.user_id == user_id,
                 ChatHistoryModel.conversation_id == conversation_id,
             )
@@ -114,8 +117,7 @@ class ChatService:
 
         # delete all rows in that convo
         await self.db.execute(
-            delete(ChatHistoryModel)
-            .where(
+            delete(ChatHistoryModel).where(
                 ChatHistoryModel.user_id == user_id,
                 ChatHistoryModel.conversation_id == conversation_id,
             )
@@ -148,13 +150,19 @@ class ChatService:
         result = []
         for convo_id, msgs in threads.items():
             # msgs already in ascending created_at
-            result.append({
-                "conversation_id": convo_id,
-                "messages": [
-                    {"prompt": m.prompt, "response": m.response, "created_at": m.created_at}
-                    for m in msgs
-                ]
-            })
+            result.append(
+                {
+                    "conversation_id": convo_id,
+                    "messages": [
+                        {
+                            "prompt": m.prompt,
+                            "response": m.response,
+                            "created_at": m.created_at,
+                        }
+                        for m in msgs
+                    ],
+                }
+            )
 
         # sort threads by last message time desc
         result.sort(key=lambda t: t["messages"][-1]["created_at"], reverse=True)

@@ -1,8 +1,7 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String, Integer, Text, ForeignKey, Float
+from sqlalchemy.dialects.postgresql import UUID, JSON
 
 from .base import SQLModel
 
@@ -17,8 +16,9 @@ class DoctorModel(SQLModel):
     last_name = Column(String, nullable=False)
     professional = Column(String, nullable=True)
     about = Column(Text, nullable=True)
-    photo       = Column(Text, nullable=True)
+    photo = Column(Text, nullable=True)
     reyting = Column(Float, nullable=True)
+    working_hours = Column(JSON, nullable=True)
 
     hospital_id = Column(
         UUID(as_uuid=True),
@@ -29,3 +29,8 @@ class DoctorModel(SQLModel):
 
     # no delete‑orphan here, since FK is SET NULL
     queues = relationship("QueueModel", back_populates="doctor")
+    services = relationship(
+        "ServiceModel",
+        back_populates="doctor",
+        cascade="all, delete-orphan",
+    )

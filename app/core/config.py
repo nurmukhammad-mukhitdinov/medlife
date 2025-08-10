@@ -22,7 +22,8 @@ class DatabaseConfig(BaseModel):
     )
     async_dsn: str = Field(
         default_factory=lambda: os.getenv(
-            "DATABASE__ASYNC_DSN", "postgresql+asyncpg://user:password@localhost:5432/dbname"
+            "DATABASE__ASYNC_DSN",
+            "postgresql+asyncpg://user:password@localhost:5432/dbname",
         )
     )
 
@@ -52,13 +53,9 @@ class Config(BaseSettings):
     database: DatabaseConfig = DatabaseConfig()
     ai: AIConfig = AIConfig()
 
-    token_key: str = Field(
-        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "")
-    )
+    token_key: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""))
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    SECRET_KEY: str = Field(
-        default_factory=lambda: os.getenv("JWT_SECRET_KEY", "")
-    )
+    SECRET_KEY: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""))
     ALGORITHM: str = "HS256"
 
 
@@ -68,7 +65,7 @@ config = Config()
 
 # Pricing constants for gpt-3.5-turbo (change if you switch models)
 INPUT_PRICE_PER_K1 = 0.0015  # $0.0015 per 1K input tokens
-OUTPUT_PRICE_PER_K1 = 0.002   # $0.002  per 1K output tokens
+OUTPUT_PRICE_PER_K1 = 0.002  # $0.002  per 1K output tokens
 PER_CALL_DOLLAR_LIMIT = 0.01  # $0.01 max per call
 
 

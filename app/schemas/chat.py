@@ -30,14 +30,10 @@ class ChatHistoryResponse(BaseSchema):
     created_at: datetime
 
 
-
-
 class ChatThreadMessage(BaseSchema):
     prompt: str
     response: str
     created_at: datetime
-
-
 
 
 class ConversationDetailResponse(BaseSchema):
@@ -45,12 +41,8 @@ class ConversationDetailResponse(BaseSchema):
     messages: List[ChatThreadMessage]
 
 
-
-
 class ConversationSummaryResponse(BaseSchema):
     conversation_id: UUID
     prompt: str
     response: str
     created_at: datetime
-
-

@@ -41,6 +41,9 @@ class UserModel(SQLModel):
 
     role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=True)
     role = relationship("RoleModel", back_populates="users")
+    admin_hospital = relationship(
+        "HospitalModel", back_populates="admin", uselist=False
+    )
 
     queues = relationship(
         "QueueModel",
@@ -58,6 +61,7 @@ class UserModel(SQLModel):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+
 
 class UserDetailModel(SQLModel):
     __tablename__ = "user_details"

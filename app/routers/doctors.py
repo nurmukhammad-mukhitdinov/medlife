@@ -15,6 +15,10 @@ from app.exc import LoggedHTTPException, raise_with_log
 from fastapi import UploadFile, File
 from fastapi.responses import JSONResponse
 import traceback
+from fastapi import Depends
+from app.core.security import get_current_user
+from app.models.users import UserModel
+
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
 
@@ -23,7 +27,10 @@ router = APIRouter(prefix="/doctors", tags=["Doctors"])
     response_model=List[DoctorResponseSchema],
     status_code=status.HTTP_200_OK,
 )
-async def get_doctors(db: AsyncSession = Depends(get_async_db)):
+async def get_doctors(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
+):
     """List all doctors."""
     try:
         return await DoctorService(db).list_doctors()
@@ -45,6 +52,7 @@ async def get_doctors(db: AsyncSession = Depends(get_async_db)):
 async def get_doctor(
     doctor_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Get a single doctor by ID."""
     try:
@@ -67,6 +75,7 @@ async def get_doctor(
 async def create_doctor(
     payload: DoctorCreateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new doctor."""
     try:
@@ -90,6 +99,7 @@ async def update_doctor(
     doctor_id: uuid.UUID,
     payload: DoctorUpdateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Update an existing doctor."""
     try:
@@ -111,6 +121,7 @@ async def update_doctor(
 async def delete_doctor(
     doctor_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Delete a doctor."""
     try:
@@ -130,11 +141,11 @@ async def delete_doctor(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def upload_doctor_photo(
-        doctor_id: uuid.UUID,
-        file: UploadFile = File(...),
-        db: AsyncSession = Depends(get_async_db),
+    doctor_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Read bytes, Base64-encode & save as TEXT."""
     try:
         data = await file.read()
         await DoctorService(db).upload_photo(doctor_id, data)
@@ -153,8 +164,9 @@ async def upload_doctor_photo(
     status_code=status.HTTP_200_OK,
 )
 async def get_doctor_photo(
-        doctor_id: uuid.UUID,
-        db: AsyncSession = Depends(get_async_db),
+    doctor_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Return JSON `{ "photo": "<base64-string>" }`."""
     try:
@@ -175,10 +187,10 @@ async def get_doctor_photo(
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_doctor_photo(
-        doctor_id: uuid.UUID,
-        db: AsyncSession = Depends(get_async_db),
+    doctor_id: uuid.UUID,
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Remove the doctor’s Base64 photo from the DB."""
     try:
         await DoctorService(db).delete_photo(doctor_id)
     except LoggedHTTPException:
