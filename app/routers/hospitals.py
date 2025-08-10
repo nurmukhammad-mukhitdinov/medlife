@@ -15,6 +15,10 @@ from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
 from fastapi import UploadFile, File
 from fastapi.responses import JSONResponse
+from fastapi import Depends
+from app.core.security import get_current_user
+from app.models.users import UserModel
+
 router = APIRouter(
     prefix="/hospitals",
     tags=["Locations - Hospitals"],
@@ -26,7 +30,10 @@ router = APIRouter(
     response_model=List[HospitalResponseSchema],
     status_code=status.HTTP_200_OK,
 )
-async def get_hospitals(db: AsyncSession = Depends(get_async_db)):
+async def get_hospitals(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
+):
     """List all hospitals."""
     try:
         return await HospitalService(db).list_hospitals()
@@ -48,6 +55,7 @@ async def get_hospitals(db: AsyncSession = Depends(get_async_db)):
 async def get_hospital(
     hospital_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Get a single hospital by ID."""
     try:
@@ -70,8 +78,8 @@ async def get_hospital(
 async def create_hospital(
     payload: HospitalCreateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Create a new hospital."""
     try:
         return await HospitalService(db).create_hospital(payload)
     except LoggedHTTPException:
@@ -93,6 +101,7 @@ async def update_hospital(
     hospital_id: uuid.UUID,
     payload: HospitalUpdateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Update an existing hospital."""
     try:
@@ -114,6 +123,7 @@ async def update_hospital(
 async def delete_hospital(
     hospital_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Delete a hospital."""
     try:
@@ -127,6 +137,7 @@ async def delete_hospital(
             f"Failed to delete hospital: {e}",
         )
 
+
 @router.post(
     "/{hospital_id}/photo",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -135,6 +146,7 @@ async def upload_hospital_photo(
     hospital_id: uuid.UUID,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Read bytes, Base64-encode & save as TEXT."""
     data = await file.read()
@@ -148,10 +160,11 @@ async def upload_hospital_photo(
 async def get_hospital_photo(
     hospital_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Return JSON `{ "photo": "<base64-string>" }`."""
     b64 = await HospitalService(db).get_photo(hospital_id)
     return JSONResponse(content={"photo": b64})
+
 
 @router.delete(
     "/{hospital_id}/photo",
@@ -160,8 +173,8 @@ async def get_hospital_photo(
 async def delete_hospital_photo(
     hospital_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Remove the hospital’s Base64 photo from the DB."""
     try:
         await HospitalService(db).delete_photo(hospital_id)
     except LoggedHTTPException:

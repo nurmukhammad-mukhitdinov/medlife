@@ -28,7 +28,7 @@ class DoctorResponseSchema(BaseSchema):
     last_name: str
     professional: Optional[str]
     about: Optional[str]
-    reyting:Optional[float]
+    reyting: Optional[float]
     hospital: HospitalBasicSchema
 
 

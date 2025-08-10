@@ -18,6 +18,9 @@ from app.schemas.locations import (
 )
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
+from fastapi import Depends
+from app.core.security import get_current_user
+from app.models.users import UserModel
 
 router = APIRouter(prefix="/locations")
 
@@ -28,7 +31,10 @@ router = APIRouter(prefix="/locations")
     response_model=List[RegionResponseSchema],
     status_code=status.HTTP_200_OK,
 )
-async def get_regions(db: AsyncSession = Depends(get_async_db)):
+async def get_regions(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
+):
     """List all regions."""
     try:
         return await LocationService(db).list_regions()
@@ -50,6 +56,7 @@ async def get_regions(db: AsyncSession = Depends(get_async_db)):
 async def get_region(
     region_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Get one region plus its districts."""
     try:
@@ -77,6 +84,7 @@ async def get_region(
 async def create_region(
     payload: RegionCreateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new region."""
     try:
@@ -100,6 +108,7 @@ async def update_region(
     region_id: uuid.UUID,
     payload: RegionUpdateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Update an existing region."""
     try:
@@ -121,6 +130,7 @@ async def update_region(
 async def delete_region(
     region_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Delete a region."""
     try:
@@ -145,7 +155,10 @@ async def delete_region(
     response_model=List[DistrictResponseSchema],
     status_code=status.HTTP_200_OK,
 )
-async def get_districts(db: AsyncSession = Depends(get_async_db)):
+async def get_districts(
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
+):
     """List all districts."""
     try:
         return await LocationService(db).list_districts()
@@ -167,6 +180,7 @@ async def get_districts(db: AsyncSession = Depends(get_async_db)):
 async def get_districts_by_region(
     region_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """List all districts in a given region."""
     try:
@@ -191,7 +205,6 @@ async def get_district(
     district_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
 ):
-    """Get a single district."""
     try:
         return await LocationService(db).get_district(district_id)
     except LoggedHTTPException:
@@ -212,6 +225,7 @@ async def get_district(
 async def create_district(
     payload: DistrictCreateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Create a new district."""
     try:
@@ -235,8 +249,9 @@ async def update_district(
     district_id: uuid.UUID,
     payload: DistrictUpdateSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Update an existing district."""
+
     try:
         return await LocationService(db).update_district(district_id, payload)
     except LoggedHTTPException:
@@ -256,8 +271,8 @@ async def update_district(
 async def delete_district(
     district_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Delete a district."""
     try:
         await LocationService(db).delete_district(district_id)
     except LoggedHTTPException:

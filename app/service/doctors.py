@@ -10,6 +10,7 @@ from app.exc import LoggedHTTPException
 from app.exc import LoggedHTTPException
 import base64
 
+
 class DoctorService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -39,8 +40,7 @@ class DoctorService:
             professional=payload.professional,
             about=payload.about,
             hospital_id=payload.hospital_id,
-            reyting=payload.reyting if hasattr(payload, 'reyting') else 5.00,
-
+            reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
         )
         self.db.add(doc)
         await self.db.flush()

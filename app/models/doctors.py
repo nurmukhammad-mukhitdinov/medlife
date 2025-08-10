@@ -17,7 +17,7 @@ class DoctorModel(SQLModel):
     last_name = Column(String, nullable=False)
     professional = Column(String, nullable=True)
     about = Column(Text, nullable=True)
-    photo       = Column(Text, nullable=True)
+    photo = Column(Text, nullable=True)
     reyting = Column(Float, nullable=True)
 
     hospital_id = Column(

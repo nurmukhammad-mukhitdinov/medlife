@@ -59,6 +59,7 @@ class UserModel(SQLModel):
         cascade="all, delete-orphan",
     )
 
+
 class UserDetailModel(SQLModel):
     __tablename__ = "user_details"
 

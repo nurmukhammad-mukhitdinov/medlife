@@ -1,6 +1,6 @@
 # app/models/chat_history.py
 import uuid
-from sqlalchemy import Column, Text, DateTime, func,  ForeignKey
+from sqlalchemy import Column, Text, DateTime, func, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from .base import SQLModel
 from sqlalchemy.orm import relationship
@@ -15,7 +15,7 @@ class ChatHistoryModel(SQLModel):
         default=uuid.uuid4,
         nullable=False,
     )
-    user_id         = Column(  # must be non-null
+    user_id = Column(  # must be non-null
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
@@ -29,4 +29,3 @@ class ChatHistoryModel(SQLModel):
     prompt = Column(Text, nullable=False)
     response = Column(Text, nullable=False)
     user = relationship("UserModel", back_populates="chats")
-

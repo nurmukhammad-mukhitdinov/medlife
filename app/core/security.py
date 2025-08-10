@@ -15,10 +15,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import config
 from app.core.database import get_async_db
 from app.models.users import UserModel
+import logging
 
+logger = logging.getLogger(__name__)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/token",
+    tokenUrl="/users/auth/token",
     scheme_name="Phone/Password",
 )
 
@@ -49,9 +51,12 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),  # ← plain token string
+    token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_async_db),
 ) -> UserModel:
+    # Log the raw token
+    logger.debug(f"Incoming token: {token!r}")
+
     creds_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid authentication credentials",
@@ -60,15 +65,25 @@ async def get_current_user(
 
     try:
         payload = jwt.decode(token, config.SECRET_KEY, algorithms=[config.ALGORITHM])
+        logger.debug(f"Decoded payload: {payload!r}")
+
         user_id: str | None = payload.get("sub")
+        logger.debug(f"Extracted user_id: {user_id!r}")
+
         if user_id is None:
             raise creds_exc
-    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+    except jwt.ExpiredSignatureError:
+        logger.warning("Token expired")
+        raise creds_exc
+    except jwt.InvalidTokenError:
+        logger.warning("Invalid token")
         raise creds_exc
 
     stmt = select(UserModel).where(UserModel.id == user_id)
     result = await db.execute(stmt)
     user = result.scalars().first()
+    logger.debug(f"DB lookup result user: {user!r}")
+
     if user is None:
         raise creds_exc
 

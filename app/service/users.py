@@ -91,9 +91,7 @@ class UserDetailService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def _build_response(
-        self, detail: UserDetailModel
-    ) -> UserDetailResponse:
+    async def _build_response(self, detail: UserDetailModel) -> UserDetailResponse:
         # fetch region name
         region_name = None
         if detail.region_id:
@@ -137,10 +135,14 @@ class UserDetailService:
 
         # 2️⃣ prevent duplicate
         existing = (
-            await self.db.execute(
-                select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+            (
+                await self.db.execute(
+                    select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -168,10 +170,14 @@ class UserDetailService:
 
     async def get(self, user_id: uuid.UUID) -> UserDetailResponse:
         detail = (
-            await self.db.execute(
-                select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+            (
+                await self.db.execute(
+                    select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not detail:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -185,10 +191,14 @@ class UserDetailService:
         payload: UpdateUserDetailRequest,
     ) -> UserDetailResponse:
         detail = (
-            await self.db.execute(
-                select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+            (
+                await self.db.execute(
+                    select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not detail:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -204,10 +214,14 @@ class UserDetailService:
 
     async def delete(self, user_id: uuid.UUID) -> None:
         detail = (
-            await self.db.execute(
-                select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+            (
+                await self.db.execute(
+                    select(UserDetailModel).where(UserDetailModel.user_id == user_id)
+                )
             )
-        ).scalars().first()
+            .scalars()
+            .first()
+        )
         if not detail:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

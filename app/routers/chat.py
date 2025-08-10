@@ -1,7 +1,11 @@
 # app/api/chat.py
 from uuid import UUID as UUIDType
 from fastapi import APIRouter, Depends, Query, status
-from app.schemas.chat import ChatRequestSchema, ChatResponseSchema, ConversationDetailResponse
+from app.schemas.chat import (
+    ChatRequestSchema,
+    ChatResponseSchema,
+    ConversationDetailResponse,
+)
 import traceback
 from typing import List
 import uuid
@@ -14,6 +18,7 @@ from app.schemas.chat import ChatHistoryResponse
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
 from app.service.chat import ChatService
+
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
@@ -30,6 +35,8 @@ async def chat_endpoint(
 ):
     reply, convo_id = await service.send(payload, conversation_id, user_id)
     return ChatResponseSchema(reply=reply, conversation_id=convo_id)
+
+
 @router.get(
     "/conversations",
     response_model=List[ConversationDetailResponse],
@@ -56,7 +63,6 @@ async def list_conversation_threads(
         )
 
 
-
 @router.get(
     "/{conversation_id}",
     response_model=List[ChatHistoryResponse],
@@ -77,6 +83,7 @@ async def get_chat(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             f"Failed to get conversation: {e}. {traceback.format_exc()}",
         )
+
 
 @router.delete(
     "/{conversation_id}",

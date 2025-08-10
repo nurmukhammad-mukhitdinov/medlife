@@ -37,6 +37,6 @@ class HospitalResponseSchema(BaseSchema):
     name: str
     address: Optional[str]
     orientir: Optional[str]
-    reyting:Optional[float]
+    reyting: Optional[float]
     region: RegionBasicSchema
     district: DistrictBasicSchema

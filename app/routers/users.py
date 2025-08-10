@@ -12,9 +12,6 @@ from app.service.users import UserService
 import uuid
 import traceback
 
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.schemas.users import (
     CreateUserDetailRequest,
     UpdateUserDetailRequest,
@@ -24,11 +21,20 @@ from app.service.users import UserDetailService
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
 from app.core.security import verify_password, create_access_token
-from app.models.users import UserModel
 from app.schemas.users import SignInRequestSchema, SignInResponseSchema
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
+from fastapi import Depends
+from app.core.security import get_current_user
+
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.security import verify_password, create_access_token
+from app.models.users import UserModel
+from app.core.database import get_async_db
+from app.schemas.users import SignInResponseSchema
+
 router = APIRouter(prefix="/users")
 
 
@@ -36,7 +42,7 @@ router = APIRouter(prefix="/users")
     "/exists",
     response_model=CheckUserExistsResponseSchema,
     status_code=status.HTTP_200_OK,
-tags=["Users"]
+    tags=["Users"],
 )
 async def check_user_exists(
     payload: UseExistRequestSchema = Depends(),
@@ -44,18 +50,18 @@ async def check_user_exists(
 ):
     exists = await UserService(db).check_exists(payload.phone_number)
     return CheckUserExistsResponseSchema(exists=exists)
+
+
 @router.post(
     "/login",
     response_model=SignInResponseSchema,
     status_code=status.HTTP_200_OK,
-tags=["Users"]
-
+    tags=["Users"],
 )
 async def login(
     credentials: SignInRequestSchema,
     db: AsyncSession = Depends(get_async_db),
 ):
-    # 1️⃣ Lookup the user by phone number
     stmt = select(UserModel).where(UserModel.phone_number == credentials.phone_number)
     result = await db.execute(stmt)
     user = result.scalars().first()
@@ -67,23 +73,40 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # 2️⃣ Create JWT
-    access_token, expires_at = create_access_token(
-        data={"sub": str(user.id)}
-    )
+    access_token, expires_at = create_access_token(data={"sub": str(user.id)})
 
-    # 3️⃣ Return the token payload
     return SignInResponseSchema(
         access_token=access_token,
         token_type="bearer",
         expires_at=expires_at,
     )
 
+
+@router.post(
+    "/auth/token",
+    response_model=SignInResponseSchema,
+    tags=["Users"],
+)
+async def token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_async_db),
+):
+    stmt = select(UserModel).where(UserModel.phone_number == form_data.username)
+    result = await db.execute(stmt)
+    user = result.scalars().first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid credentials")
+    access_token, expires_at = create_access_token(data={"sub": str(user.id)})
+    return SignInResponseSchema(
+        access_token=access_token, token_type="bearer", expires_at=expires_at
+    )
+
+
 @router.post(
     "",
     response_model=RegisterResponseSchema,
     status_code=status.HTTP_201_CREATED,
-tags=["Users"]
+    tags=["Users"],
 )
 async def create_user(
     payload: RegisterRequestSchema,
@@ -108,7 +131,7 @@ async def create_user(
     "",
     response_model=List[RegisterResponseSchema],
     status_code=status.HTTP_200_OK,
-tags=["Users"]
+    tags=["Users"],
 )
 async def get_all_users(
     db: AsyncSession = Depends(get_async_db),
@@ -132,7 +155,7 @@ async def get_all_users(
     "/{user_id}",
     response_model=RegisterResponseSchema,
     status_code=status.HTTP_200_OK,
-tags=["Users"]
+    tags=["Users"],
 )
 async def get_user(
     user_id: uuid.UUID,
@@ -157,12 +180,13 @@ async def get_user(
     "/{user_id}",
     response_model=RegisterResponseSchema,
     status_code=status.HTTP_200_OK,
-tags=["Users"]
+    tags=["Users"],
 )
 async def update_user(
     user_id: uuid.UUID,
     payload: UpdateUserRequestSchema,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Update an existing user."""
     try:
@@ -179,16 +203,12 @@ async def update_user(
         )
 
 
-@router.delete(
-    "/{user_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-tags=["Users"]
-)
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Users"])
 async def delete_user(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
-    """Delete a user by UUID."""
     try:
         await UserService(db).delete(user_id)
     except LoggedHTTPException:
@@ -200,6 +220,7 @@ async def delete_user(
             f"Failed to delete user: {e}. {traceback.format_exc()}",
         )
 
+
 @router.post(
     "_details",
     response_model=UserDetailResponse,
@@ -210,6 +231,7 @@ async def create_user_detail(
     user_id: uuid.UUID,
     payload: CreateUserDetailRequest,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
         detail = await UserDetailService(db).create(user_id, payload)
@@ -229,11 +251,11 @@ async def create_user_detail(
     response_model=UserDetailResponse,
     status_code=status.HTTP_200_OK,
     tags=["User Details"],
-
 )
 async def get_user_detail(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
         return await UserDetailService(db).get(user_id)
@@ -252,12 +274,12 @@ async def get_user_detail(
     response_model=UserDetailResponse,
     status_code=status.HTTP_200_OK,
     tags=["User Details"],
-
 )
 async def update_user_detail(
     user_id: uuid.UUID,
     payload: UpdateUserDetailRequest,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
         return await UserDetailService(db).update(user_id, payload)
@@ -275,11 +297,11 @@ async def update_user_detail(
     "_details",
     status_code=status.HTTP_204_NO_CONTENT,
     tags=["User Details"],
-
 )
 async def delete_user_detail(
     user_id: uuid.UUID,
     db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
 ):
     try:
         await UserDetailService(db).delete(user_id)

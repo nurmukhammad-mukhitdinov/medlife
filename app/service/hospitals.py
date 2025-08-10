@@ -9,6 +9,7 @@ from app.schemas.hospitals import HospitalCreateSchema, HospitalUpdateSchema
 from app.exc import LoggedHTTPException
 import base64
 
+
 class HospitalService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -37,14 +38,13 @@ class HospitalService:
         return hospital
 
     async def create_hospital(self, payload: HospitalCreateSchema) -> HospitalModel:
-        # no duplicate‑name check here, but you could add one if desired
         hosp = HospitalModel(
             name=payload.name,
             address=payload.address,
             orientir=payload.orientir,
             region_id=payload.region_id,
             district_id=payload.district_id,
-            reyting=payload.reyting if hasattr(payload, 'reyting') else 5.00,
+            reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
         )
         self.db.add(hosp)
         await self.db.flush()
@@ -82,6 +82,7 @@ class HospitalService:
         """Return the Base64 text (or empty string)."""
         hosp = await self.get_hospital(hospital_id)
         return hosp.photo or ""
+
     async def delete_photo(self, hospital_id: uuid.UUID) -> None:
         """Remove the stored Base64 photo."""
         hosp = await self.get_hospital(hospital_id)
