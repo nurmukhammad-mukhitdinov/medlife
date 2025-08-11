@@ -19,18 +19,33 @@ from app.routers import (
 )
 from app.version import __version__
 
-
 api_router = APIRouter()
 api_router.include_router(users.router)
 api_router.include_router(locations.router)
 api_router.include_router(hospitals.router)
 api_router.include_router(doctors.router)
 api_router.include_router(queue.router)
-api_router.include_router((chat.router))
-api_router.include_router((hospital_admins.router))
-api_router.include_router((doctor_bookings.router))
-api_router.include_router((service_prices.router))
+api_router.include_router(chat.router)
+api_router.include_router(hospital_admins.router)
+api_router.include_router(doctor_bookings.router)
+api_router.include_router(service_prices.router)
 
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://192.168.0.101:5173",
+    "https://medlife-production.up.railway.app",
+    "https://medlifeadminafq3rfasdkfnaseif2qwefd.vercel.app",
+    "https://medlifeuzbekistan-b3kx.vercel.app",
+]
+
+ALLOWED_HOSTS = [
+    "localhost",
+    "127.0.0.1",
+    "192.168.0.101",
+    "medlife-production.up.railway.app",
+    "medlifeadminafq3rfasdkfnaseif2qwefd.vercel.app",
+    "medlifeuzbekistan-b3kx.vercel.app",
+]
 
 def create_app() -> FastAPI:
     app = FastAPI(
@@ -38,66 +53,57 @@ def create_app() -> FastAPI:
         version=__version__,
         openapi_url="/openapi.json",
         docs_url="/docs",
-        redoc_url=None,  # disable redoc if you don't need it
+        redoc_url=None,
     )
 
-    # 2. Enforce HTTPS in production (redirects HTTP → HTTPS)
-    if config.ENVIRONMENT == "production":
-        app.add_middleware(HTTPSRedirectMiddleware)
-
-    # 3. Trust only specified hosts
-    app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=config.TRUSTED_HOSTS,
-    )
-
-    # 4. GZip compress responses over 1000 bytes
-    app.add_middleware(GZipMiddleware, minimum_size=1000)
-
-    # 5. CORS must be outermost so it can respond to OPTIONS (preflight) before any redirect
+    # CORS first (outermost) so OPTIONS preflights pass cleanly.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "https://medlife-production.up.railway.app",
-        ],
+        allow_origins=ALLOWED_ORIGINS,
+        allow_origin_regex=r"^https://[a-zA-Z0-9-]+\.vercel\.app$",
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
 
-    # 6. Add custom security headers on every response
+    if config.ENVIRONMENT == "production":
+        app.add_middleware(HTTPSRedirectMiddleware)
+
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=(
+            config.TRUSTED_HOSTS
+            if getattr(config, "TRUSTED_HOSTS", None)
+            else ALLOWED_HOSTS
+        ),
+    )
+
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
+
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):
         response = await call_next(request)
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=63072000; includeSubDomains; preload"
-        )
+        if config.ENVIRONMENT == "production":
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=63072000; includeSubDomains; preload"
+            )
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
         return response
 
-    # 7. Register the API routers
     app.include_router(api_router)
 
-    # 8. Health‑check endpoint (not shown in OpenAPI)
     @app.get("/", include_in_schema=False)
     async def health_check():
-        return {
-            "status": "ok",
-            "project": config.PROJECT_NAME,
-            "docs": "/docs",
-        }
+        return {"status": "ok", "project": config.PROJECT_NAME, "docs": "/docs"}
 
     return app
 
 
-# 9. Create the app instance
 app = create_app()
 
-# 10. If run as a script, launch Uvicorn
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
