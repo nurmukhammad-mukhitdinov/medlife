@@ -39,7 +39,7 @@ class AIConfig(BaseModel):
         default_factory=lambda: float(os.getenv("AI__TEMPERATURE"))
     )
     max_tokens: int = Field(
-        default_factory=lambda: int(os.getenv("AI__MAX_TOKENS"))
+        default_factory=lambda: int(os.getenv("AI__MAX_TOKENS", 200))
     )
 
 
