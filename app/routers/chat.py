@@ -13,14 +13,21 @@ from sqlalchemy import select, func
 from typing import List, Tuple
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy.exc import SQLAlchemyError
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    status,
+)
 from app.schemas.chat import ChatHistoryResponse
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
+from app.core.database import get_async_db
+from app.exc import LoggedHTTPException, raise_with_log
 from app.service.chat import ChatService
-
 router = APIRouter(prefix="/chat", tags=["Chat"])
-
 
 @router.post(
     "",
@@ -33,8 +40,37 @@ async def chat_endpoint(
     user_id: UUIDType = Query(...),
     service: ChatService = Depends(ChatService),
 ):
-    reply, convo_id = await service.send(payload, conversation_id, user_id)
-    return ChatResponseSchema(reply=reply, conversation_id=convo_id)
+    """Send a chat message and get a reply."""
+    try:
+        reply, convo_id = await service.send(payload, conversation_id, user_id)
+        return ChatResponseSchema(reply=reply, conversation_id=convo_id)
+
+    except LoggedHTTPException as e:
+        # Already contains logging and proper status
+        raise e
+
+    except ValueError as ve:
+        # Example: invalid payload or user ID format
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve),
+        )
+
+    except SQLAlchemyError as sae:
+        # Any DB-related errors
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {sae}",
+        )
+
+    except Exception as e:
+        # Catch-all for unexpected errors
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to process chat request: {e}. {traceback.format_exc()}",
+        )
 
 
 @router.get(
