@@ -24,14 +24,15 @@ SYSTEM_PROMPT = (
     "You are a professional medical assistant. "
     "You must *only* answer medical questions, and refuse any non-medical request."
 )
-
-# ✅ one extra, tiny style system message to force a flat, clean paragraph
 STYLE_PROMPT = (
-    "Your response should be in the language the request from user is coming from"
+    "Respond in the user's language using one concise, natural paragraph. "
     "Do not use line breaks, bullet points, or the '@' character. "
-    "When recommending a doctor, include specialty, hospital name, district, and region in this format: "
-    "“Doctor or Doktor (or Доктор upcoming from request language).{specialty} {first} {last} from {hospital}, Address: {district} tumani, {region} viloyati.” "
+    "When recommending a doctor, clearly state their specialty and full name, "
+    "and mention the hospital naturally in the sentence, without using separate labels "
+    "like 'Kasalxona:' or 'Manzil:'. "
+    "Make the recommendation feel like friendly advice rather than a data list."
 )
+
 
 class ChatService:
     def __init__(self, db: AsyncSession = Depends(get_async_db)):
