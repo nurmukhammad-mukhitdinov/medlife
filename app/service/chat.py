@@ -1,8 +1,7 @@
 # app/service/chat.py
 import uuid
 from typing import List, Tuple
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from fastapi import Depends
 from app.models.chat import ChatHistoryModel
 from app.schemas.chat import ChatRequestSchema
@@ -12,18 +11,98 @@ from fastapi import HTTPException, status
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
-from datetime import datetime
 from typing import List
+from sqlalchemy import nullslast
+
+import re
+
+from app.models.hospitals import HospitalModel
+from app.models.doctors import DoctorModel
+from app.models.locations import RegionModel, DistrictModel
 
 SYSTEM_PROMPT = (
     "You are a professional medical assistant. "
     "You must *only* answer medical questions, and refuse any non-medical request."
 )
 
+# ✅ one extra, tiny style system message to force a flat, clean paragraph
+STYLE_PROMPT = (
+    "Write responses as a single Uzbek paragraph. "
+    "Do not use line breaks, bullet points, or the '@' character. "
+    "When recommending a doctor, include specialty, hospital name, district, and region in this format: "
+    "“Doctor or Doktor (or Доктор upcoming from request language).{specialty} {first} {last} from {hospital}, Address: {district} tumani, {region} viloyati.” "
+    "Your response should be in the language the request from user is coming from"
+)
 
 class ChatService:
     def __init__(self, db: AsyncSession = Depends(get_async_db)):
         self.db = db
+
+    async def _build_directory_context(
+        self,
+        max_doctors: int = 200,
+        max_chars: int = 2200,
+    ) -> str:
+        """
+        A compact, token-friendly directory of doctors with hospital, district, region, rating.
+        """
+        stmt = (
+            select(
+                DoctorModel.first_name,
+                DoctorModel.last_name,
+                DoctorModel.professional,
+                HospitalModel.name.label("hospital_name"),
+                DistrictModel.name.label("district_name"),
+                RegionModel.name.label("region_name"),
+                DoctorModel.reyting,
+            )
+            .join(HospitalModel, DoctorModel.hospital_id == HospitalModel.id)
+            .join(DistrictModel, HospitalModel.district_id == DistrictModel.id)
+            .join(RegionModel, HospitalModel.region_id == RegionModel.id)
+            .order_by(
+                RegionModel.name.asc(),
+                DistrictModel.name.asc(),
+                nullslast(DoctorModel.reyting.desc()),
+                DoctorModel.last_name.asc(),
+                DoctorModel.first_name.asc(),
+            )
+            .limit(max_doctors)
+        )
+
+        res = await self.db.execute(stmt)
+        rows = res.fetchall()
+
+        if not rows:
+            return (
+                "Local directory: none found. If no local matches exist, recommend a general practitioner."
+            )
+
+        # keep simple lines; the model will cite from these
+        lines: List[str] = []
+        for fn, ln, spec, hosp, district, region, rating in rows:
+            spec = spec or "Pediatriya"  # default if missing
+            rating_str = f", reyting {rating:.1f}" if isinstance(rating, (int, float)) and rating is not None else ""
+            # No '@' anywhere. Include district and region.
+            lines.append(
+                f"Dr. {fn} {ln}, {spec}, {hosp}, {district} tumani, {region} viloyati{rating_str}."
+            )
+
+        out = "Local doctors and hospitals (use when recommending a specialist): " + " ".join(lines)
+        if len(out) > max_chars:
+            out = out[: max_chars - 20].rstrip() + " …"
+        return (
+            out
+            + " Guidance: pick the most relevant specialist for the user’s symptoms; if unclear, suggest pediatriya/terapevt."
+        )
+
+    @staticmethod
+    def _normalize_text(s: str) -> str:
+        """
+        Remove '@', collapse whitespace/newlines to single spaces, trim.
+        """
+        s = s.replace("@", " ")
+        s = re.sub(r"\s+", " ", s)
+        return s.strip()
 
     async def send(
         self,
@@ -31,11 +110,9 @@ class ChatService:
         conversation_id: uuid.UUID | None,
         user_id: uuid.UUID,
     ) -> Tuple[str, uuid.UUID]:
-        # 1️⃣ Create a new ID if none given
         if conversation_id is None:
             conversation_id = uuid.uuid4()
 
-        # 2️⃣ Load prior rounds
         result = await self.db.execute(
             select(ChatHistoryModel)
             .where(ChatHistoryModel.conversation_id == conversation_id)
@@ -43,20 +120,23 @@ class ChatService:
         )
         past = result.scalars().all()
 
-        # 3️⃣ Build messages, starting with your static system prompt
-        messages: List[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        directory_context = await self._build_directory_context()
+        messages: List[dict] = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": STYLE_PROMPT},      # ✅ enforce flat paragraph & no '@'
+            {"role": "system", "content": directory_context}, # ✅ add directory w/ district & region
+        ]
+
         for row in past:
             messages.append({"role": "user", "content": row.prompt})
             messages.append({"role": "assistant", "content": row.response})
 
-        # 4️⃣ Append each incoming payload message as a user message
         for m in payload.messages:
             messages.append({"role": "user", "content": m.content})
 
-        # 5️⃣ Call OpenAI
-        reply = await get_chat_response(messages)
+        raw_reply = await get_chat_response(messages)
+        reply = self._normalize_text(raw_reply)   # ✅ sanitize just in case
 
-        # 6️⃣ Persist this round
         new_row = ChatHistoryModel(
             user_id=user_id,
             conversation_id=conversation_id,
@@ -65,8 +145,8 @@ class ChatService:
         )
         self.db.add(new_row)
         await self.db.commit()
-
         return reply, conversation_id
+
 
     async def list(self, user_id: uuid.UUID) -> List[ChatHistoryModel]:
         result = await self.db.execute(
