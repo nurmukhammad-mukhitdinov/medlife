@@ -27,11 +27,10 @@ SYSTEM_PROMPT = (
 
 # ✅ one extra, tiny style system message to force a flat, clean paragraph
 STYLE_PROMPT = (
-    "Write responses as a single Uzbek paragraph. "
+    "Your response should be in the language the request from user is coming from"
     "Do not use line breaks, bullet points, or the '@' character. "
     "When recommending a doctor, include specialty, hospital name, district, and region in this format: "
     "“Doctor or Doktor (or Доктор upcoming from request language).{specialty} {first} {last} from {hospital}, Address: {district} tumani, {region} viloyati.” "
-    "Your response should be in the language the request from user is coming from"
 )
 
 class ChatService:
