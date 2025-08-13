@@ -30,16 +30,16 @@ class DatabaseConfig(BaseModel):
 
 class AIConfig(BaseModel):
     openai_api_key: str = Field(
-        default_factory=lambda: os.getenv("AI__OPENAI_API_KEY", "")
+        default_factory=lambda: os.getenv("AI__OPENAI_API_KEY")
     )
     model_name: str = Field(
-        default_factory=lambda: os.getenv("AI__MODEL_NAME", "gpt-4")
+        default_factory=lambda: os.getenv("AI__MODEL_NAME")
     )
     temperature: float = Field(
-        default_factory=lambda: float(os.getenv("AI__TEMPERATURE", 0.3))
+        default_factory=lambda: float(os.getenv("AI__TEMPERATURE"))
     )
     max_tokens: int = Field(
-        default_factory=lambda: int(os.getenv("AI__MAX_TOKENS", 200))
+        default_factory=lambda: int(os.getenv("AI__MAX_TOKENS"))
     )
 
 
@@ -53,9 +53,9 @@ class Config(BaseSettings):
     database: DatabaseConfig = DatabaseConfig()
     ai: AIConfig = AIConfig()
 
-    token_key: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""))
+    token_key: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY"))
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    SECRET_KEY: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY", ""))
+    SECRET_KEY: str = Field(default_factory=lambda: os.getenv("JWT_SECRET_KEY"))
     ALGORITHM: str = "HS256"
 
 
