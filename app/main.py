@@ -36,6 +36,7 @@ ALLOWED_ORIGINS = [
     "https://medlife-production.up.railway.app",
     "https://medlifeadminafq3rfasdkfnaseif2qwefd.vercel.app",
     "https://medlifeuzbekistan-b3kx.vercel.app",
+"https://medlifeuzbekistan.vercel.app",
 ]
 
 ALLOWED_HOSTS = [
@@ -45,6 +46,7 @@ ALLOWED_HOSTS = [
     "medlife-production.up.railway.app",
     "medlifeadminafq3rfasdkfnaseif2qwefd.vercel.app",
     "medlifeuzbekistan-b3kx.vercel.app",
+"https://medlifeuzbekistan.vercel.app",
 ]
 
 def create_app() -> FastAPI:
