@@ -15,7 +15,7 @@ class HospitalCreateSchema(BaseModel):
     orientir: Optional[str] = None
     region_id: uuid.UUID
     district_id: uuid.UUID
-
+    coordinates: Optional[str] = None
 
 class HospitalUpdateSchema(BaseModel):
     name: Optional[str] = None
@@ -23,7 +23,7 @@ class HospitalUpdateSchema(BaseModel):
     orientir: Optional[str] = None
     region_id: Optional[uuid.UUID] = None
     district_id: Optional[uuid.UUID] = None
-
+    coordinates: Optional[str] = None
 
 #
 # ─── HOSPITAL RESPONSE SCHEMA ───────────────────────────────────────────────────────
@@ -40,3 +40,4 @@ class HospitalResponseSchema(BaseSchema):
     reyting: Optional[float]
     region: RegionBasicSchema
     district: DistrictBasicSchema
+    coordinates: Optional[str] = None

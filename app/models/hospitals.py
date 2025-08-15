@@ -31,7 +31,7 @@ class HospitalModel(SQLModel):
     admin_id = Column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
-
+    coordinates = Column(String, nullable=True)
     admin = relationship("UserModel", back_populates="admin_hospital")
 
     region = relationship("RegionModel", back_populates="hospitals")
