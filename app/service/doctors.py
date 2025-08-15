@@ -3,7 +3,9 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.models.hospitals import HospitalModel
 from app.models.doctors import DoctorModel
 from app.schemas.doctors import DoctorCreateSchema, DoctorUpdateSchema
 from app.exc import LoggedHTTPException
@@ -17,6 +19,40 @@ class DoctorService:
 
     async def list_doctors(self) -> list[DoctorModel]:
         stmt = select(DoctorModel).options(selectinload(DoctorModel.hospital))
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+    async def list_by_location(
+        self,
+        *,
+        region_id: uuid.UUID | None = None,
+        district_id: uuid.UUID | None = None,
+        hospital_id: uuid.UUID | None = None,
+    ) -> list[DoctorModel]:
+        # Require exactly one of the three
+        provided = [region_id is not None, district_id is not None, hospital_id is not None]
+        if sum(provided) != 1:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST,
+                "Provide exactly one of: region_id, district_id, or hospital_id.",
+            )
+
+        # Base query loads hospital relation for the response schema
+        stmt = select(DoctorModel).options(selectinload(DoctorModel.hospital))
+
+        if hospital_id is not None:
+            # Direct filter on doctors.hospital_id
+            stmt = stmt.where(DoctorModel.hospital_id == hospital_id)
+
+        else:
+            # Join hospitals to filter by region or district (both are on hospitals table)
+            stmt = (
+                stmt.join(HospitalModel, DoctorModel.hospital_id == HospitalModel.id)
+            )
+            if district_id is not None:
+                stmt = stmt.where(HospitalModel.district_id == district_id)
+            elif region_id is not None:
+                stmt = stmt.where(HospitalModel.region_id == region_id)
+
         res = await self.db.execute(stmt)
         return res.scalars().all()
 

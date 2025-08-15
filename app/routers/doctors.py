@@ -9,6 +9,7 @@ from app.schemas.doctors import (
     DoctorCreateSchema,
     DoctorUpdateSchema,
     DoctorResponseSchema,
+
 )
 from app.core.database import get_async_db
 from app.exc import LoggedHTTPException, raise_with_log
@@ -18,7 +19,8 @@ import traceback
 from fastapi import Depends
 from app.core.security import get_current_user
 from app.models.users import UserModel
-
+from fastapi import Query
+from typing import Optional
 router = APIRouter(prefix="/doctors", tags=["Doctors"])
 
 
@@ -42,7 +44,34 @@ async def get_doctors(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             f"Failed to list doctors: {e}",
         )
-
+@router.get(
+    "/by-location",
+    response_model=List[DoctorResponseSchema],
+    status_code=status.HTTP_200_OK,
+)
+async def list_doctors_by_location(
+    region_id: Optional[uuid.UUID] = Query(None),
+    district_id: Optional[uuid.UUID] = Query(None),
+    hospital_id: Optional[uuid.UUID] = Query(None),
+    db: AsyncSession = Depends(get_async_db),
+    current_user: UserModel = Depends(get_current_user),
+):
+    """
+    List doctors filtered by exactly ONE of: region_id, district_id, hospital_id.
+    Returns 400 if none or more than one are provided.
+    """
+    try:
+        return await DoctorService(db).list_by_location(
+            region_id=region_id, district_id=district_id, hospital_id=hospital_id
+        )
+    except LoggedHTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()
+        raise_with_log(
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+            f"Failed to list doctors by location: {e}",
+        )
 
 @router.get(
     "/{doctor_id}",
