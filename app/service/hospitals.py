@@ -44,6 +44,7 @@ class HospitalService:
             orientir=payload.orientir,
             region_id=payload.region_id,
             district_id=payload.district_id,
+            coordinates=payload.coordinates,
             reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
         )
         self.db.add(hosp)
@@ -64,6 +65,8 @@ class HospitalService:
             hosp.region_id = payload.region_id
         if payload.district_id is not None:
             hosp.district_id = payload.district_id
+        if payload.coordinates is not None:
+            hosp.coordinates = payload.coordinates
         await self.db.flush()
         return await self.get_hospital(hospital_id)
 
