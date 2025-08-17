@@ -11,15 +11,6 @@ class ServicePriceBase(BaseSchema):
     hospital_id: Optional[uuid.UUID] = None
     doctor_id: Optional[uuid.UUID] = None
 
-    @validator("hospital_id", "doctor_id", always=True)
-    def validate_owner(cls, v, values, **kwargs):
-        hospital_id = values.get("hospital_id")
-        doctor_id = values.get("doctor_id")
-        # Require at least one owner (hospital or doctor). Allow both if needed.
-        if hospital_id is None and doctor_id is None:
-            raise ValueError("Either hospital_id or doctor_id must be provided.")
-        return v
-
 
 class ServicePriceCreate(ServicePriceBase):
     pass
