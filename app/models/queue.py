@@ -36,3 +36,4 @@ class QueueModel(SQLModel):
     hospital = relationship("HospitalModel", back_populates="queues")
     doctor = relationship("DoctorModel", back_populates="queues")
     user = relationship("UserModel", back_populates="queues")
+
