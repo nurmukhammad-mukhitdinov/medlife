@@ -7,6 +7,7 @@ from .locations import (
     DistrictBasicSchema,
 )
 from pydantic import BaseModel, Field
+from .doctor_bookings import WorkingHoursSchema
 
 
 class HospitalCreateSchema(BaseModel):
@@ -16,6 +17,7 @@ class HospitalCreateSchema(BaseModel):
     region_id: uuid.UUID
     district_id: uuid.UUID
     coordinates: Optional[str] = None
+    working_hours: Optional[WorkingHoursSchema] = None
 
 class HospitalUpdateSchema(BaseModel):
     name: Optional[str] = None
@@ -24,6 +26,7 @@ class HospitalUpdateSchema(BaseModel):
     region_id: Optional[uuid.UUID] = None
     district_id: Optional[uuid.UUID] = None
     coordinates: Optional[str] = None
+    working_hours: Optional[WorkingHoursSchema] = None
 
 #
 # ─── HOSPITAL RESPONSE SCHEMA ───────────────────────────────────────────────────────
@@ -41,3 +44,4 @@ class HospitalResponseSchema(BaseSchema):
     region: RegionBasicSchema
     district: DistrictBasicSchema
     coordinates: Optional[str] = None
+    working_hours: Optional[WorkingHoursSchema] = None

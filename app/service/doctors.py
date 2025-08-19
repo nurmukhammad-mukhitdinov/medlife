@@ -11,7 +11,7 @@ from app.schemas.doctors import DoctorCreateSchema, DoctorUpdateSchema
 from app.exc import LoggedHTTPException
 from app.exc import LoggedHTTPException
 import base64
-
+from app.schemas.base import DEFAULT_WORKING_HOURS
 
 class DoctorService:
     def __init__(self, db: AsyncSession):
@@ -77,6 +77,8 @@ class DoctorService:
             about=payload.about,
             hospital_id=payload.hospital_id,
             reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
+            working_hours=payload.working_hours.dict() if payload.working_hours else DEFAULT_WORKING_HOURS,  # ⬅️
+
         )
         self.db.add(doc)
         await self.db.flush()
@@ -97,6 +99,8 @@ class DoctorService:
             doc.about = payload.about
         if payload.hospital_id is not None:
             doc.hospital_id = payload.hospital_id
+        if payload.working_hours is not None:  # ⬅️
+            doc.working_hours = payload.working_hours.dict()  # ⬅️
         await self.db.flush()
         return await self.get_doctor(doctor_id)
 

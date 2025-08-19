@@ -60,3 +60,4 @@ class BookingListResponse(BaseSchema):
     appointment_start: datetime
     appointment_end: datetime
     status: str
+

@@ -1,7 +1,7 @@
 import uuid
-from sqlalchemy import Column, String, Integer, Text, ForeignKey, Float
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, String, Text, ForeignKey, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import UUID, JSON
 
 from .base import SQLModel
 
@@ -33,6 +33,7 @@ class HospitalModel(SQLModel):
     )
     coordinates = Column(String, nullable=True)
     admin = relationship("UserModel", back_populates="admin_hospital")
+    working_hours = Column(JSON, nullable=True)
 
     region = relationship("RegionModel", back_populates="hospitals")
     district = relationship("DistrictModel", back_populates="hospitals")

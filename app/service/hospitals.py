@@ -8,7 +8,7 @@ from app.models.hospitals import HospitalModel
 from app.schemas.hospitals import HospitalCreateSchema, HospitalUpdateSchema
 from app.exc import LoggedHTTPException
 import base64
-
+from app.schemas.base import DEFAULT_WORKING_HOURS
 
 class HospitalService:
     def __init__(self, db: AsyncSession):
@@ -46,6 +46,8 @@ class HospitalService:
             district_id=payload.district_id,
             coordinates=payload.coordinates,
             reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
+            working_hours=payload.working_hours.dict() if payload.working_hours else DEFAULT_WORKING_HOURS,  # ⬅️
+
         )
         self.db.add(hosp)
         await self.db.flush()
