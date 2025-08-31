@@ -42,7 +42,9 @@ class UserService:
             role_id="8497eb6c-0eea-40e7-8467-f8e393f56811",
         )
         self.db.add(user)
-        await self.db.flush()  # populate id & created_at
+        await self.db.flush()  # PK populated
+        await self.db.refresh(user)  # ensure server defaults (e.g., created_at) are loaded
+        # optionally: await self.db.commit()
         return user
 
     async def get_one(self, user_id: uuid.UUID) -> UserModel:
@@ -165,7 +167,7 @@ class UserDetailService:
         )
         self.db.add(detail)
         await self.db.flush()
-
+        await self.db.refresh(detail)
         # 4️⃣ return with names
         return await self._build_response(detail)
 

@@ -18,7 +18,7 @@ class HospitalCreateSchema(BaseModel):
     district_id: uuid.UUID
     coordinates: Optional[str] = None
     working_hours: Optional[WorkingHoursSchema] = None
-
+    phone_number: str | None = None
 class HospitalUpdateSchema(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
@@ -27,7 +27,7 @@ class HospitalUpdateSchema(BaseModel):
     district_id: Optional[uuid.UUID] = None
     coordinates: Optional[str] = None
     working_hours: Optional[WorkingHoursSchema] = None
-
+    phone_number: str | None = None
 #
 # ─── HOSPITAL RESPONSE SCHEMA ───────────────────────────────────────────────────────
 class HospitalBasicSchema(BaseSchema):
@@ -45,3 +45,4 @@ class HospitalResponseSchema(BaseSchema):
     district: DistrictBasicSchema
     coordinates: Optional[str] = None
     working_hours: Optional[WorkingHoursSchema] = None
+    phone_number: str | None = None
