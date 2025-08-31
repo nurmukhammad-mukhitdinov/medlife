@@ -46,8 +46,8 @@ class HospitalService:
             district_id=payload.district_id,
             coordinates=payload.coordinates,
             reyting=payload.reyting if hasattr(payload, "reyting") else 5.00,
-            working_hours=payload.working_hours.dict() if payload.working_hours else DEFAULT_WORKING_HOURS,  # ⬅️
-
+            working_hours=payload.working_hours.dict() if payload.working_hours else DEFAULT_WORKING_HOURS,
+            phone_number=payload.phone_number
         )
         self.db.add(hosp)
         await self.db.flush()
@@ -69,6 +69,8 @@ class HospitalService:
             hosp.district_id = payload.district_id
         if payload.coordinates is not None:
             hosp.coordinates = payload.coordinates
+        if payload.phone_number is not None:
+            hosp.phone_number = payload.phone_number
         await self.db.flush()
         return await self.get_hospital(hospital_id)
 

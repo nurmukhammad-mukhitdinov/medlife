@@ -34,7 +34,7 @@ class HospitalModel(SQLModel):
     coordinates = Column(String, nullable=True)
     admin = relationship("UserModel", back_populates="admin_hospital")
     working_hours = Column(JSON, nullable=True)
-
+    phone_number = Column(String, nullable=True)
     region = relationship("RegionModel", back_populates="hospitals")
     district = relationship("DistrictModel", back_populates="hospitals")
     doctors = relationship(
