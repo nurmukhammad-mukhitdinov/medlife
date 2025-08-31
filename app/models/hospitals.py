@@ -52,3 +52,5 @@ class HospitalModel(SQLModel):
         back_populates="hospital",
         cascade="all, delete-orphan",
     )
+
+    reviews = relationship("ReviewsModel", back_populates="hospital")
