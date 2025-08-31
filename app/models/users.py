@@ -61,6 +61,7 @@ class UserModel(SQLModel):
         back_populates="user",
         cascade="all, delete-orphan",
     )
+    reviews = relationship("ReviewsModel", back_populates="user")
 
 
 class UserDetailModel(SQLModel):

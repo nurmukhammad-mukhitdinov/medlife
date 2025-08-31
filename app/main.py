@@ -16,6 +16,7 @@ from app.routers import (
     hospital_admins,
     doctor_bookings,
     service_prices,
+reviews
 )
 from app.version import __version__
 
@@ -30,7 +31,7 @@ api_router.include_router(chat.router)
 api_router.include_router(hospital_admins.router)
 api_router.include_router(doctor_bookings.router)
 api_router.include_router(service_prices.router)
-
+api_router.include_router(reviews.router)
 def create_app() -> FastAPI:
     app = FastAPI(
         title=config.PROJECT_NAME,
