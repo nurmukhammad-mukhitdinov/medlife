@@ -63,6 +63,7 @@ class UserModel(SQLModel):
     )
     reviews = relationship("ReviewsModel", back_populates="user")
     clinic_chats = relationship("ClinicChatModel", back_populates="user", cascade="all, delete-orphan")
+    medicine_reminders = relationship("MedicineReminderModel", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserDetailModel(SQLModel):

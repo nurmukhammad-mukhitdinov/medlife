@@ -1,3 +1,4 @@
+import asyncio
 import uvicorn
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +18,10 @@ from app.routers import (
     doctor_bookings,
     service_prices,
     reviews,
-    clinic_chats,  # <-- keep the module, we’ll use clinic_chats.router & clinic_chats.ws_router below
+    clinic_chats,
 )
 from app.version import __version__
+from app.service.telegram_reminder import dp, bot   # ✅ Aiogram 3 style
 
 
 def create_app() -> FastAPI:
@@ -81,8 +83,6 @@ def create_app() -> FastAPI:
     api_router.include_router(doctor_bookings.router)
     api_router.include_router(service_prices.router)
     api_router.include_router(reviews.router)
-
-    # Clinic chat (HTTP + WS) – add BOTH once, here
     api_router.include_router(clinic_chats.router)     # HTTP endpoints
     api_router.include_router(clinic_chats.ws_router)  # WebSocket endpoint
 
@@ -96,6 +96,13 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+# ----------------- Start Bot on FastAPI startup -----------------
+@app.on_event("startup")
+async def start_bot():
+    asyncio.create_task(dp.start_polling(bot))
+
 
 if __name__ == "__main__":
     uvicorn.run(
