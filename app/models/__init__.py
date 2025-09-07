@@ -5,3 +5,4 @@ from .hospitals import HospitalModel
 from .doctors import DoctorModel
 from .chat import ChatHistoryModel
 from .service_prices import ServiceModel
+from .clinic_chats import ClinicChatModel, ClinicChatMessageModel

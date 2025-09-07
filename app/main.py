@@ -16,22 +16,12 @@ from app.routers import (
     hospital_admins,
     doctor_bookings,
     service_prices,
-reviews
+    reviews,
+    clinic_chats,  # <-- keep the module, we’ll use clinic_chats.router & clinic_chats.ws_router below
 )
 from app.version import __version__
 
-# ----------------- Routers -----------------
-api_router = APIRouter()
-api_router.include_router(users.router)
-api_router.include_router(locations.router)
-api_router.include_router(hospitals.router)
-api_router.include_router(doctors.router)
-api_router.include_router(queue.router)
-api_router.include_router(chat.router)
-api_router.include_router(hospital_admins.router)
-api_router.include_router(doctor_bookings.router)
-api_router.include_router(service_prices.router)
-api_router.include_router(reviews.router)
+
 def create_app() -> FastAPI:
     app = FastAPI(
         title=config.PROJECT_NAME,
@@ -42,22 +32,20 @@ def create_app() -> FastAPI:
     )
 
     # ----------------- Fully open CORS -----------------
-    # allow_origin_regex=".*" dynamically reflects the Origin,
-    # so it works with allow_credentials=True
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[],
-        allow_origin_regex=".*",  # match any origin
-        allow_credentials=True,   # allow cookies / Authorization headers
-        allow_methods=["*"],      # allow all HTTP methods
-        allow_headers=["*"],      # allow all request headers
-        expose_headers=["*"],     # expose all response headers
+        allow_origin_regex=".*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
     )
 
     # ----------------- Fully open Host -----------------
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*"],  # allow any Host header
+        allowed_hosts=["*"],
     )
 
     # ----------------- HTTPS redirect (optional) -----------------
@@ -81,7 +69,23 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
         return response
 
-    # ----------------- Routes -----------------
+    # ----------------- Routers -----------------
+    api_router = APIRouter()
+    api_router.include_router(users.router)
+    api_router.include_router(locations.router)
+    api_router.include_router(hospitals.router)
+    api_router.include_router(doctors.router)
+    api_router.include_router(queue.router)
+    api_router.include_router(chat.router)
+    api_router.include_router(hospital_admins.router)
+    api_router.include_router(doctor_bookings.router)
+    api_router.include_router(service_prices.router)
+    api_router.include_router(reviews.router)
+
+    # Clinic chat (HTTP + WS) – add BOTH once, here
+    api_router.include_router(clinic_chats.router)     # HTTP endpoints
+    api_router.include_router(clinic_chats.ws_router)  # WebSocket endpoint
+
     app.include_router(api_router)
 
     @app.get("/", include_in_schema=False)

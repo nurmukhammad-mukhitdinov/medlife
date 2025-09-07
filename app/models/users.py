@@ -62,6 +62,7 @@ class UserModel(SQLModel):
         cascade="all, delete-orphan",
     )
     reviews = relationship("ReviewsModel", back_populates="user")
+    clinic_chats = relationship("ClinicChatModel", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserDetailModel(SQLModel):
