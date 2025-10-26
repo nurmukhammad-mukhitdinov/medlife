@@ -7,3 +7,4 @@ from .chat import ChatHistoryModel
 from .service_prices import ServiceModel
 from .clinic_chats import ClinicChatModel, ClinicChatMessageModel
 from .medicine_reminder import MedicineReminderModel
+from .lawyers import UserModelLawyer, RoleModelLawyer, RegionModelLawyer, DistrictModelLawyer, MiniCallCenterModelLawyer, LawyerModelLawyer

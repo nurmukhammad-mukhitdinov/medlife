@@ -19,9 +19,11 @@ from app.routers import (
     service_prices,
     reviews,
     clinic_chats,
+    lawyers,
+    lawyers_users
 )
 from app.version import __version__
-from app.service.telegram_reminder import dp, bot   # ✅ Aiogram 3 style
+from app.service.telegram_reminder import dp, bot
 
 
 def create_app() -> FastAPI:
@@ -33,7 +35,6 @@ def create_app() -> FastAPI:
         redoc_url=None,
     )
 
-    # ----------------- Fully open CORS -----------------
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[],
@@ -44,20 +45,16 @@ def create_app() -> FastAPI:
         expose_headers=["*"],
     )
 
-    # ----------------- Fully open Host -----------------
     app.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=["*"],
     )
 
-    # ----------------- HTTPS redirect (optional) -----------------
     if config.ENVIRONMENT == "production":
         app.add_middleware(HTTPSRedirectMiddleware)
 
-    # ----------------- GZip compression -----------------
     app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-    # ----------------- Security headers -----------------
     @app.middleware("http")
     async def add_security_headers(request: Request, call_next):
         response = await call_next(request)
@@ -71,7 +68,6 @@ def create_app() -> FastAPI:
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
         return response
 
-    # ----------------- Routers -----------------
     api_router = APIRouter()
     api_router.include_router(users.router)
     api_router.include_router(locations.router)
@@ -83,9 +79,10 @@ def create_app() -> FastAPI:
     api_router.include_router(doctor_bookings.router)
     api_router.include_router(service_prices.router)
     api_router.include_router(reviews.router)
-    api_router.include_router(clinic_chats.router)     # HTTP endpoints
-    api_router.include_router(clinic_chats.ws_router)  # WebSocket endpoint
-
+    api_router.include_router(clinic_chats.router)
+    api_router.include_router(clinic_chats.ws_router)
+    api_router.include_router(lawyers.router)
+    api_router.include_router(lawyers_users.router)
     app.include_router(api_router)
 
     @app.get("/", include_in_schema=False)
@@ -98,7 +95,6 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-# ----------------- Start Bot on FastAPI startup -----------------
 @app.on_event("startup")
 async def start_bot():
     asyncio.create_task(dp.start_polling(bot))

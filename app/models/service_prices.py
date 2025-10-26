@@ -9,13 +9,11 @@ from .base import SQLModel
 class ServiceModel(SQLModel):
     __tablename__ = "services"
 
-    id = Column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False
-    )
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, nullable=False)
 
-    name = Column(String, nullable=False)  # e.g., "Consultation"
-    description = Column(Text, nullable=True)  # optional details
-    price = Column(Float, nullable=False)  # service cost
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    price = Column(Float, nullable=False)
 
     hospital_id = Column(
         UUID(as_uuid=True),
