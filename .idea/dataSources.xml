@@ -15,11 +15,11 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/sadsadsad</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="hgfdsasfg@localhost" uuid="c5456571-376e-432c-be27-49d8ada5000d">
+    <data-source source="LOCAL" name="polymex@localhost" uuid="db5d975a-6d52-4821-8f8b-5a8dcdf94d65">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/hgfdsasfg</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/polymex</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>
