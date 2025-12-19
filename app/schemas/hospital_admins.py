@@ -16,6 +16,7 @@ class HospitalAdminCreateSchema(HospitalAdminBaseSchema):
     hospital_id: uuid.UUID
 
 
+
 class HospitalAdminUpdateSchema(BaseSchema):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None

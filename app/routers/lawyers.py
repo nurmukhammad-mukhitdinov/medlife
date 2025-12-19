@@ -10,6 +10,7 @@ from app.service.lawyers import LawyerCrudService
 router = APIRouter(prefix="/lawyers", tags=["Lawyers"])
 
 
+
 @router.post("", response_model=LawyerOut, status_code=status.HTTP_201_CREATED)
 async def create_lawyer(payload: LawyerCreate, db: AsyncSession = Depends(get_async_db)):
     return await LawyerCrudService(db).create(payload)
